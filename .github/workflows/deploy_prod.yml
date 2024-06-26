@@ -5,7 +5,7 @@ on:
     types: [released]
   repository_dispatch:
     types:
-      - webhook
+      - rebuild
 jobs:
   deploy:
     name: Deploy to Prod
