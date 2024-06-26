@@ -1,6 +1,42 @@
+
+# package directories
 node_modules
-.aio
-.aws.tmp.creds.json
-.env
+jspm_packages
+
+# build
+build
 dist
-.next
+.manifest-dist.yml
+
+# Config
+config.json
+.env*
+.aio
+
+# Adobe I/O console config
+console.json
+
+# Test output
+junit.xml
+
+# IDE & Temp
+.cache
+.idea
+.nyc_output
+.vscode
+coverage
+.aws.tmp.creds.json
+.wskdebug.props.tmp
+
+# Parcel
+.parcel-cache
+
+# OSX
+.DS_Store
+
+# yeoman
+.yo-repository
+
+# logs folder for aio-run-detached
+logs
+
