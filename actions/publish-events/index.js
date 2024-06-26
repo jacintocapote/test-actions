@@ -12,10 +12,10 @@
  *   - The two steps above imply that every client knowing the URL to this deployed action will be able to invoke it without any authentication and authorization checks against Adobe Identity Management System
  *   - Make sure to validate these changes against your security requirements before deploying the action
  */
-
+import { Octokit } from "@octokit/core";
 
 const { Core, Events } = require('@adobe/aio-sdk')
-const uuid = require('uuid')
+
 const {
   CloudEvent
 } = require("cloudevents");
@@ -25,46 +25,30 @@ const { errorResponse, getBearerToken, stringParameters, checkMissingRequestInpu
 async function main (params) {
   // create a Logger
   const logger = Core.Logger('main', { level: params.LOG_LEVEL || 'info' })
-  console.log('estoy aqui',params)
 
   try {
     // 'info' is the default level if not set
     logger.info('Calling the main action')
 
-    // log parameters, only if params.LOG_LEVEL === 'debug'
-    logger.debug(stringParameters(params))
+    const octokit = new Octokit({
+      auth: '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'
+    })
 
-    // check for missing request input parameters and headers
-    const requiredParams = ['apiKey', 'providerId', 'eventCode', 'payload']
-    const requiredHeaders = ['Authorization', 'x-gw-ims-org-id']
-    const errorMessage = checkMissingRequestInputs(params, requiredParams, requiredHeaders)
-    console.log('errorMessage', errorMessage)
-    if (errorMessage) {
-      // return and log client errors
-      return errorResponse(400, errorMessage, logger)
-    }
+    await octokit.request('POST /repos/jacintocapote/test-actions/dispatches', {
+      owner: 'jacintocapote',
+      repo: 'test-actions',
+      event_type: 'rebuild',
+      client_payload: {
+        unit: false,
+        integration: true
+      },
+      headers: {
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    })
 
-    // extract the user Bearer token from the Authorization header
-    const token = getBearerToken(params)
-    console.log('token', token)
-    
-    // initialize the client
-    const orgId = params.__ow_headers['x-gw-ims-org-id']
-    const eventsClient = await Events.init(orgId, params.apiKey, token)
-
-    // Create cloud event for the given payload
-    const cloudEvent = createCloudEvent(params.providerId, params.eventCode, params.payload)
-
-    // Publish to I/O Events
-    const published = await eventsClient.publishEvent(cloudEvent)
-    console.log('published', published)
-    let statusCode = 200
-    if (published === 'OK') {
-      logger.info('Published successfully to I/O Events')
-    } else if (published === undefined) {
-      logger.info('Published to I/O Events but there were not interested registrations')
-      statusCode = 204
-    }
+    const statusCode = 204;
+    logger.info('Launched rebuild next.js')
     const response = {
       statusCode: statusCode,
     }
@@ -78,16 +62,5 @@ async function main (params) {
     // return with 500
     return errorResponse(500, 'server error', logger)
   }
-}
-
-function createCloudEvent(providerId, eventCode, payload) {
-  let cloudevent = new CloudEvent({
-    source: 'urn:uuid:' + providerId,
-    type: eventCode,
-    datacontenttype: "application/json",
-    data: payload,
-    id: uuid.v4()
-  });
-  return cloudevent
 }
 
